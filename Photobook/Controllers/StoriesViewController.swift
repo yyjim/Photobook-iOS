@@ -38,7 +38,13 @@ class StoriesViewController: UIViewController {
         
         StoriesManager.shared.loadTopStories()
         
-        NotificationCenter.default.addObserver(self, selector: #selector(storiesWereUpdated), name: StoriesNotificationName.storiesWereUpdated, object: nil)        
+        NotificationCenter.default.addObserver(self, selector: #selector(storiesWereUpdated), name: StoriesNotificationName.storiesWereUpdated, object: nil)
+        
+        navigationItem.leftBarButtonItem = UIBarButtonItem(barButtonSystemItem: .stop, target: self, action: #selector(dismissPhotobook))
+    }
+    
+    @objc func dismissPhotobook() {
+        dismiss(animated: true, completion: nil)
     }
     
     override func viewWillAppear(_ animated: Bool) {

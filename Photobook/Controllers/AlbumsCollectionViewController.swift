@@ -157,6 +157,14 @@ class AlbumsCollectionViewController: UICollectionViewController {
         present(searchController, animated: true, completion: nil)
     }
     
+    func addDismissButton() {
+        navigationItem.leftBarButtonItem = UIBarButtonItem(barButtonSystemItem: .stop, target: self, action: #selector(dismissPhotobook))
+    }
+    
+    @objc func dismissPhotobook() {
+        dismiss(animated: true, completion: nil)
+    }
+    
     func showAlbum(album: Album){
         let assetPickerController = photobookMainStoryboard.instantiateViewController(withIdentifier: "AssetPickerCollectionViewController") as! AssetPickerCollectionViewController
         assetPickerController.album = album

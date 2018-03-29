@@ -16,6 +16,8 @@ class FacebookLandingViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        navigationItem.leftBarButtonItem = UIBarButtonItem(barButtonSystemItem: .stop, target: self, action: #selector(dismissPhotobook))
+        
         // If we are logged in show the Facebook album picker
         if FBSDKAccessToken.current() != nil {
             
@@ -36,6 +38,10 @@ class FacebookLandingViewController: UIViewController {
         if let navigationController = navigationController {
             facebookLogoCenterYConstraint.constant = -(navigationController.navigationBar.frame.height / 2.0)
         }
+    }
+    
+    @objc func dismissPhotobook() {
+        dismiss(animated: true, completion: nil)
     }
     
     @IBAction func facebookSignInTapped(_ sender: UIButton) {

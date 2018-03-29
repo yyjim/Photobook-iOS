@@ -75,6 +75,10 @@ class AssetPickerCollectionViewController: UICollectionViewController {
         NotificationCenter.default.addObserver(self, selector: #selector(albumsWereUpdated(_:)), name: AssetsNotificationName.albumsWereUpdated, object: nil)
     }
     
+    @objc func dismissPhotobook() {
+        dismiss(animated: true, completion: nil)
+    }
+    
     private func loadAssets() {
         guard album.assets.isEmpty else {
             postAlbumLoadSetup()

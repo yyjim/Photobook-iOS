@@ -63,8 +63,10 @@ let photobookMainStoryboard =  UIStoryboard(name: "Main", bundle: photobookBundl
         
         // Browse
         // Set the albumManager to the AlbumsCollectionViewController
-        let albumViewController = (tabBarController.viewControllers?[Tab.browse.rawValue] as? UINavigationController)?.topViewController as? AlbumsCollectionViewController
-        albumViewController?.albumManager = PhotosAlbumManager()
+        if let albumViewController = (tabBarController.viewControllers?[Tab.browse.rawValue] as? UINavigationController)?.topViewController as? AlbumsCollectionViewController {
+            albumViewController.albumManager = PhotosAlbumManager()
+            albumViewController.addDismissButton()
+        }
         
         // Stories
         // If there are no stories, remove the stories tab

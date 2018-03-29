@@ -17,6 +17,8 @@ class InstagramLandingViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        navigationItem.leftBarButtonItem = UIBarButtonItem(barButtonSystemItem: .stop, target: self, action: #selector(dismissPhotobook))
+        
         // If we are logged in show the Instagram asset picker
         if KeychainSwift().getData(InstagramClient.Constants.keychainInstagramTokenKey) != nil {
             // Hide all views because this screen will be shown for a split second
@@ -35,6 +37,10 @@ class InstagramLandingViewController: UIViewController {
         if let navigationController = navigationController {
             instagramLogoCenterYConstraint.constant = -(navigationController.navigationBar.frame.height / 2.0)
         }
+    }
+    
+    @objc func dismissPhotobook() {
+        dismiss(animated: true, completion: nil)
     }
 
 }

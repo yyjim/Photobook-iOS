@@ -17,6 +17,8 @@ extension AssetPickerCollectionViewController {
         assetPicker.prepareToHandleLogout(accountManager: InstagramClient.shared)
         InstagramClient.shared.authorizeURLHandler = assetPicker
         
+        assetPicker.navigationItem.leftBarButtonItem = UIBarButtonItem(barButtonSystemItem: .stop, target: assetPicker, action: #selector(dismissPhotobook))
+        
         return assetPicker
     }
     

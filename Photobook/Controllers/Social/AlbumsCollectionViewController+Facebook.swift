@@ -12,6 +12,9 @@ extension AlbumsCollectionViewController {
         let albumViewController = photobookMainStoryboard.instantiateViewController(withIdentifier: "AlbumsCollectionViewController") as! AlbumsCollectionViewController
         albumViewController.albumManager = FacebookAlbumManager()
         albumViewController.prepareToHandleLogout(accountManager: FacebookClient.shared)
+        
+        albumViewController.addDismissButton()
+        
         return albumViewController
     }
 }
