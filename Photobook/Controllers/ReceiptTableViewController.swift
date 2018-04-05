@@ -14,7 +14,7 @@ struct ReceiptNotificationName {
     static let receiptWillDismiss = Notification.Name("ly.kite.sdk.receiptWillDismissNotificationName")
 }
 
-class ReceiptTableViewController: UITableViewController {
+@objc public class ReceiptTableViewController: UITableViewController {
     
     private typealias State = ReceiptViewControllerState
     
@@ -31,7 +31,7 @@ class ReceiptTableViewController: UITableViewController {
         case header, progress, info, details, lineItems, footer
     }
     
-    var order: Order?
+    @objc public var order: Order?
     
     private var cost: Cost? {
         return order?.cachedCost
@@ -64,7 +64,7 @@ class ReceiptTableViewController: UITableViewController {
         return ProgressOverlayViewController.progressOverlay(parent: self)
     }()
     
-    override func viewDidLoad() {
+    override public func viewDidLoad() {
         super.viewDidLoad()
         
         Analytics.shared.trackScreenViewed(Analytics.ScreenName.receipt)
@@ -84,7 +84,7 @@ class ReceiptTableViewController: UITableViewController {
         NotificationCenter.default.removeObserver(self)
     }
     
-    override func viewWillAppear(_ animated: Bool) {
+    override public func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         
         let loadingString = NSLocalizedString("ReceiptTableViewController/LoadingData", value: "Loading info...", comment: "description for a loading indicator")
@@ -217,11 +217,11 @@ class ReceiptTableViewController: UITableViewController {
     
     //MARK: Table View
     
-    override func numberOfSections(in tableView: UITableView) -> Int {
+    override public func numberOfSections(in tableView: UITableView) -> Int {
         return 6
     }
     
-    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+    override public func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         switch section {
         case Section.header.rawValue:
             return 1
@@ -243,7 +243,7 @@ class ReceiptTableViewController: UITableViewController {
         }
     }
     
-    override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+    override public func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         switch indexPath.section {
         case Section.header.rawValue:
             let cell = tableView.dequeueReusableCell(withIdentifier: ReceiptHeaderTableViewCell.reuseIdentifier, for: indexPath) as! ReceiptHeaderTableViewCell
