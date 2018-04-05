@@ -27,7 +27,7 @@ class LineItem: Codable {
     
 }
 
-@objc public class Cost: NSObject, Codable {
+class Cost: Codable {
     
     var orderHash: Int
     let lineItems: [LineItem]?
