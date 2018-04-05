@@ -23,7 +23,7 @@ import UIKit
     @objc public var paymentToken: String?
     
     var cachedCost: Cost?
-    @objc public var validCost: Cost? {
+    var validCost: Cost? {
         return hasValidCachedCost ? cachedCost : nil
     }
     
