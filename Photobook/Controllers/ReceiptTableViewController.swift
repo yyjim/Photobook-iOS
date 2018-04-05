@@ -31,7 +31,7 @@ struct ReceiptNotificationName {
         case header, progress, info, details, lineItems, footer
     }
     
-    public var order: Order?
+    @objc public var order: Order?
     
     private var cost: Cost? {
         return order?.cachedCost
