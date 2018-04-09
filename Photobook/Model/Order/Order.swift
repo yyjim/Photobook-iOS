@@ -13,7 +13,7 @@ struct OrdersNotificationName {
     static let orderWasSuccessful = Notification.Name("ly.kite.sdk.orderWasSuccessful")
 }
 
-class Order: Codable {
+@objc public class Order: NSObject, Codable {
 
     // TODO: Get the supported currencies from the server and make sure the currency of the locale is supported. Otherwise fall back to USD, GBP, EUR, first supported, in that order of preference
     let currencyCode = Locale.current.currencyCode ?? "USD" //USD if locale unavailable
@@ -24,8 +24,8 @@ class Order: Codable {
     var promoCode: String?
     var photobookId: String?
     var lastSubmissionDate: Date?
-    var orderId: String?
-    var paymentToken: String?
+    @objc public var orderId: String?
+    @objc public var paymentToken: String?
     
     var cachedCost: Cost?
     var validCost: Cost? {
@@ -41,7 +41,7 @@ class Order: Codable {
         return orderIsFree
     }
     
-    var hashValue: Int {
+    override public var hashValue: Int {
         var stringHash = ""
         if let deliveryDetails = deliveryDetails { stringHash += "ad:\(deliveryDetails.hashValue)," }
         if let promoCode = promoCode { stringHash += "pc:\(promoCode)," }
