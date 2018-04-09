@@ -32,6 +32,10 @@ import UIKit
     /// Shared client
     @objc public static let shared = PhotobookSDK()
     
+    @objc public func rootViewControllerForCurrentState() -> UIViewController {
+        return PhotobookManager.rootViewControllerForCurrentState()
+    }
+    
     
     /// True if a photo book order is being processed, false otherwise
     @objc public var isProcessingOrder: Bool {
