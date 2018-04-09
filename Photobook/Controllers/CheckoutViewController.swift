@@ -103,7 +103,7 @@ class CheckoutViewController: UIViewController {
         
         Analytics.shared.trackScreenViewed(Analytics.ScreenName.basket)
         
-        if PhotobookManager.environment == .test {
+        if APIClient.environment == .test {
             title = Constants.title + " (TEST)"
         } else {
             title = Constants.title
@@ -168,10 +168,9 @@ class CheckoutViewController: UIViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         
+        updateViews()
         if !OrderManager.basketOrder.hasValidCachedCost {
             refresh(false)
-        } else {
-            updateViews()
         }
     }
     
