@@ -196,7 +196,7 @@ class PhotobookAPIManager {
         for asset in processedAssets {
 
             asset.imageData(progressHandler: nil, completionHandler: { [weak welf = self] data, fileExtension, error in
-                guard error == nil, let data = data, let fileExtension = fileExtension else {
+                guard error == nil, let data = data, fileExtension != .unsupported else {
                     welf?.delegate?.didFailUpload(PhotobookAPIError.missingPhotobookInfo)
                     return
                 }
@@ -333,8 +333,8 @@ class PhotobookAPIManager {
                 var picture = [String: Any]()
                 picture["url"] = asset.uploadUrl
                 picture["relativeStartPoint"] = ["x": productLayoutAsset.transform.tx, "y": productLayoutAsset.transform.ty]
-                picture["rotation"] = atan2(productLayoutAsset.transform.b, productLayoutAsset.transform.a)
-                picture["zoom"] = productLayoutAsset.transform.a // X & Y axes scale should be the same, use the scale for X axis
+                picture["rotation"] = productLayoutAsset.transform.angle
+                picture["zoom"] = productLayoutAsset.transform.scale
                 
                 containedItem["picture"] = picture
                 page["containedItem"] = containedItem

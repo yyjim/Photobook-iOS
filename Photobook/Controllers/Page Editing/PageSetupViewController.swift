@@ -44,7 +44,10 @@ class PageSetupViewController: UIViewController, PhotobookNavigationBarDelegate 
     @IBOutlet private var cancelBarButtonItem: UIBarButtonItem!
     
     var photobookNavigationBarType: PhotobookNavigationBarType = .clear
-    var selectedAssetsSource: SelectedAssetsSource?
+    var album: Album?
+    var albumManager: AlbumManager?
+    var assetPickerViewController: PhotobookAssetPicker?
+    var previewAssetImage: UIImage?
     
     private var assetSelectorViewController: AssetSelectorViewController!
     private var layoutSelectionViewController: LayoutSelectionViewController!
@@ -105,7 +108,8 @@ class PageSetupViewController: UIViewController, PhotobookNavigationBarDelegate 
     
     // Public settings
     weak var delegate: PageSetupDelegate?
-    var selectedAssetsManager: SelectedAssetsManager!
+    var assets: [Asset]!
+    
     var pageIndex: Int! {
         didSet {
             guard pageIndex != nil else {
@@ -113,6 +117,8 @@ class PageSetupViewController: UIViewController, PhotobookNavigationBarDelegate 
             }
             
             productLayout = ProductManager.shared.productLayouts[pageIndex].shallowCopy()
+            productLayout!.hasBeenEdited = true
+
             pageType = ProductManager.shared.pageType(forLayoutIndex: pageIndex)
             
             if pageType == .cover {
@@ -208,10 +214,9 @@ class PageSetupViewController: UIViewController, PhotobookNavigationBarDelegate 
             setupLayoutSelection()
             setupColorSelection()
             setupTextEditing()
-            
+
             pageView.pageIndex = pageIndex
             pageView.productLayout = productLayout
-            pageView.setupImageBox(with: nil, animated: false)
             pageView.setupTextBox(mode: .userTextOnly)
             
             // Setup the opposite layout if necessary
@@ -222,7 +227,6 @@ class PageSetupViewController: UIViewController, PhotobookNavigationBarDelegate 
                 oppositePageView!.setupImageBox(with: nil, animated: false)
                 oppositePageView!.setupTextBox(mode: .userTextOnly)
             }
-
             hideViewsBeforeAnimation()
             
             hasDoneSetup = true
@@ -247,6 +251,9 @@ class PageSetupViewController: UIViewController, PhotobookNavigationBarDelegate 
     
     func animateFromPhotobook(frame: CGRect, completion: @escaping (() -> Void)) {
         containerRect = frame
+        
+        // Use preview image for the animation and editing until a higher resolution image is available
+        pageView.setupImageBox(with: previewAssetImage, animated: false)
         
         animatableAssetImageView.transform = .identity
         animatableAssetImageView.frame = frameView.bounds
@@ -278,6 +285,9 @@ class PageSetupViewController: UIViewController, PhotobookNavigationBarDelegate 
         }, completion: { _ in
             self.photobookContainerView.alpha = 1.0
             self.animatableAssetImageView.alpha = 0.0
+            
+            // Request higher resolution image
+            self.pageView.setupImageBox(with: nil, animated: false, loadThumbnailFirst: false)
 
             completion()
         })
@@ -403,8 +413,10 @@ class PageSetupViewController: UIViewController, PhotobookNavigationBarDelegate 
     }
     
     private func setupAssetSelection() {
-        assetSelectorViewController.selectedAssetsManager = selectedAssetsManager
-        assetSelectorViewController.selectedAssetsSource = selectedAssetsSource
+        assetSelectorViewController.assets = assets
+        assetSelectorViewController.album = album
+        assetSelectorViewController.albumManager = albumManager
+        assetSelectorViewController.assetPickerViewController = assetPickerViewController
         assetSelectorViewController.selectedAsset = productLayout.asset
     }
     
@@ -432,7 +444,7 @@ class PageSetupViewController: UIViewController, PhotobookNavigationBarDelegate 
         toolbarButtons[Tool.editText.rawValue].isEnabled = enabled
     }
     
-    private func updateAll(with asset:Asset?) {
+    private func updateAll(with asset: Asset?) {
         layoutSelectionViewController.asset = asset
         productLayout.asset = asset
         
@@ -543,7 +555,8 @@ class PageSetupViewController: UIViewController, PhotobookNavigationBarDelegate 
         switch tool {
         case .selectAsset, .selectLayout, .selectColor:
             if placeAssetWasSelected {
-                assetPlacementViewController.animateBackToPhotobook {
+                assetPlacementViewController.animateBackToPhotobook { image in
+                    self.assetImageView.image = image
                     self.assetImageView.transform = self.productLayout!.productLayoutAsset!.transform
                     self.view.sendSubview(toBack: self.placementContainerView)
                     self.isAnimatingTool = false
