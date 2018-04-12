@@ -47,7 +47,7 @@ struct ReceiptNotificationName {
     private var lastProcessingError:OrderProcessingError?
     
     @IBOutlet weak var dismissBarButtonItem: UIBarButtonItem!
-    var dismissClosure:(() -> Void)?
+    var dismissClosure: ((UITabBarController?) -> Void)?
     
     private var modalPresentationDismissedGroup = DispatchGroup()
     private lazy var paymentManager: PaymentAuthorizationManager = {
@@ -67,7 +67,7 @@ struct ReceiptNotificationName {
     override public func viewDidLoad() {
         super.viewDidLoad()
         
-        Analytics.shared.trackScreenViewed(Analytics.ScreenName.receipt)
+        Analytics.shared.trackScreenViewed(.receipt)
         
         navigationItem.leftBarButtonItem = UIBarButtonItem()
         navigationController?.interactivePopGestureRecognizer?.isEnabled = false
@@ -144,6 +144,7 @@ struct ReceiptNotificationName {
             showPaymentMethods()
         case .paymentRetry:
             //re authorize payment and submit order again
+            Analytics.shared.trackAction(.uploadRetried)
             pay()
             break
         case .cancelled:
@@ -165,6 +166,7 @@ struct ReceiptNotificationName {
             let alertController = UIAlertController(title: title, message: message, preferredStyle: .alert)
             alertController.addAction(UIAlertAction(title: CommonLocalizedStrings.no, style: .default, handler:nil))
             alertController.addAction(UIAlertAction(title: CommonLocalizedStrings.yes, style: .destructive, handler: { [weak welf = self] (_) in
+                Analytics.shared.trackAction(.uploadCancelled)
                 welf?.dismiss()
             }))
             
@@ -179,9 +181,37 @@ struct ReceiptNotificationName {
             ProductManager.shared.reset()
             OrderManager.shared.reset()
             NotificationCenter.default.post(name: ReceiptNotificationName.receiptWillDismiss, object: nil)
-            welf?.navigationController?.interactivePopGestureRecognizer?.isEnabled = true
-            welf?.navigationController?.popToRootViewController(animated: true)
-            welf?.dismissClosure?()
+            
+            if welf?.dismissClosure != nil {
+                #if PHOTOBOOK_SDK
+                    welf?.dismissClosure?(nil)
+                #else
+                    // Check if the Photobook app was launched into the ReceiptViewController
+                    if welf?.navigationController?.viewControllers.count == 1 {
+                        welf?.navigationController?.isNavigationBarHidden = true
+                        welf?.performSegue(withIdentifier: "ReceiptDismiss", sender: nil)
+                    } else {
+                        welf?.navigationController?.interactivePopGestureRecognizer?.isEnabled = true
+                        welf?.navigationController?.popToRootViewController(animated: true)
+                    }
+                #endif
+                return
+            }
+            
+            // No delegate or dismiss closure provided
+            if welf?.presentingViewController != nil {
+                welf?.presentingViewController!.dismiss(animated: true, completion: nil)
+                return
+            }
+            welf?.navigationController?.popViewController(animated: true)
+        }
+    }
+    
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        guard segue.identifier == "ReceiptDismiss" else { return }
+        
+        if let tabBarController = segue.destination as? UITabBarController {
+            dismissClosure?(tabBarController)
         }
     }
     

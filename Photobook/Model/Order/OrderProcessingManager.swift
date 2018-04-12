@@ -85,13 +85,17 @@ class OrderProcessingManager {
                 welf?.cancelCompletionBlock?()
                 welf?.cancelCompletionBlock = nil
             }
+        } else {
+            cancelCompletionBlock?()
+            cancelCompletionBlock = nil
         }
     }
     
     func startPhotobookUpload() {
         ProductManager.shared.startPhotobookUpload { (count, error) in
             if error != nil {
-                NotificationCenter.default.post(name: Notifications.failed, object: self, userInfo: ["error":OrderProcessingError.upload])
+                Analytics.shared.trackError(.imageUpload)
+                NotificationCenter.default.post(name: Notifications.failed, object: self, userInfo: ["error": OrderProcessingError.upload])
             }
         }
     }
@@ -111,8 +115,9 @@ class OrderProcessingManager {
             }
             
             guard let urls = urls else {
-                //Failure - PDF
-                NotificationCenter.default.post(name: Notifications.failed, object: welf, userInfo: ["error":OrderProcessingError.pdf])
+                // Failure - PDF
+                Analytics.shared.trackError(.pdfCreation)
+                NotificationCenter.default.post(name: Notifications.failed, object: welf, userInfo: ["error": OrderProcessingError.pdf])
                 return
             }
             
@@ -127,8 +132,9 @@ class OrderProcessingManager {
                 }
                 
                 if errorMessage != nil {
-                    //Failure - Submission
-                    NotificationCenter.default.post(name: Notifications.failed, object: welf, userInfo: ["error":OrderProcessingError.submission])
+                    // Failure - Submission
+                    Analytics.shared.trackError(.orderSubmission)
+                    NotificationCenter.default.post(name: Notifications.failed, object: welf, userInfo: ["error": OrderProcessingError.submission])
                     return
                 }
                 
@@ -143,12 +149,13 @@ class OrderProcessingManager {
                     }
                     
                     if errorMessage != nil {
-                        //Failure - Payment
-                        NotificationCenter.default.post(name: Notifications.failed, object: welf, userInfo: ["error":OrderProcessingError.payment])
+                        // Failure - Payment
+                        Analytics.shared.trackError(.payment)
+                        NotificationCenter.default.post(name: Notifications.failed, object: welf, userInfo: ["error": OrderProcessingError.payment])
                         return
                     }
                     
-                    //Success
+                    // Success
                     welf?.isProcessingOrder = false
                     NotificationCenter.default.post(name: Notifications.completed, object: self)
                 })
@@ -173,13 +180,13 @@ class OrderProcessingManager {
     
     @objc func photobookUploadFailed() {
         cancelProcessing() {
-            NotificationCenter.default.post(name: Notifications.failed, object: self, userInfo: ["error":OrderProcessingError.cancelled])
+            NotificationCenter.default.post(name: Notifications.failed, object: self, userInfo: ["error": OrderProcessingError.cancelled])
         }
     }
     
     @objc func shouldRetryUpload() {
         ProductManager.shared.cancelPhotobookUpload {
-            NotificationCenter.default.post(name: Notifications.failed, object: self, userInfo: ["error":OrderProcessingError.upload])
+            NotificationCenter.default.post(name: Notifications.failed, object: self, userInfo: ["error": OrderProcessingError.upload])
         }
     }
 }

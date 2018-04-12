@@ -103,7 +103,7 @@ class ProductManager {
     var hasLayoutWithoutAsset: Bool {
         return productLayouts.first { $0.hasEmptyContent } != nil
     }
-    var emptyLayoutIndices: [Int] {
+    var emptyLayoutIndices: [Int]? {
         var temp = [Int]()
         var index = 0
         for productLayout in productLayouts {
@@ -116,7 +116,28 @@ class ProductManager {
             }
             index += 1
         }
-        return temp
+        return temp.count > 0 ? temp : nil
+    }
+    var truncatedTextLayoutIndices: [Int]? {
+        var temp = [Int]()
+
+        let pageSize = CGSize(width: product!.pageWidth!, height: product!.pageHeight!)
+        
+        for (index, productLayout) in productLayouts.enumerated() {
+            guard let textBox = productLayout.layout.textLayoutBox, let text = productLayout.text, text.count > 0 else { continue }
+            
+            let fontType = productLayout.fontType ?? .plain
+            let fontSize = fontType.sizeForScreenHeight()
+            
+            let textFrame = textBox.rectContained(in: pageSize)
+            let attributedText = fontType.attributedText(with: text, fontSize: fontSize, fontColor: .black)
+            
+            let textHeight = attributedText.height(for: textFrame.width)
+            if textHeight > textFrame.height {
+                temp.append(index)
+            }
+        }
+        return temp.count > 0 ? temp : nil
     }
     
     //upload
@@ -479,7 +500,52 @@ class ProductManager {
         return .right
     }
     
-    func moveLayout(at sourceIndex: Int, to destinationIndex: Int) {
+    func moveLayout(from fromIndex: Int, to toIndex: Int) {
+        let fromProductLayout = productLayouts[fromIndex]
+        let toProductLayout = productLayouts[toIndex]
+        
+        let movingDown = fromIndex < toIndex
+        
+        if movingDown {
+            if fromProductLayout.layout.isDoubleLayout && toProductLayout.layout.isDoubleLayout {
+                moveLayout(at: fromIndex, to: toIndex)
+            } else if fromProductLayout.layout.isDoubleLayout {
+                moveLayout(at: fromIndex, to: toIndex + 1)
+            } else if toProductLayout.layout.isDoubleLayout {
+                moveLayout(at: fromIndex + 1, to: toIndex)
+                moveLayout(at: fromIndex, to: toIndex - 1)
+            } else {
+                moveLayout(at: fromIndex + 1, to: toIndex + 1)
+                moveLayout(at: fromIndex, to: toIndex)
+            }
+        } else {
+            moveLayout(at: fromIndex, to: toIndex)
+            
+            if !fromProductLayout.layout.isDoubleLayout {
+                moveLayout(at: fromIndex + 1, to: toIndex + 1)
+            }
+        }
+    }
+    
+    func replaceLayout(at index: Int, with productLayout: ProductLayout, pageType: PageType?) {
+        let previousLayout = productLayouts[index]
+        productLayouts[index] = productLayout
+        
+        if previousLayout.layout.isDoubleLayout != productLayout.layout.isDoubleLayout {
+            // From single to double
+            if productLayout.layout.isDoubleLayout {
+                if pageType == .left {
+                    deletePage(at: index + 1)
+                } else if pageType == .right {
+                    deletePage(at: index - 1)
+                }
+            } else {
+                addPage(at: index + 1)
+            }
+        }
+    }
+
+    private func moveLayout(at sourceIndex: Int, to destinationIndex: Int) {
         guard sourceIndex < productLayouts.count && destinationIndex < productLayouts.count else { return }
         productLayouts.move(sourceIndex, to: destinationIndex)
     }
@@ -506,13 +572,13 @@ extension ProductManager: PhotobookAPIManagerDelegate {
     func didFailUpload(_ error: Error) {
         if let error = error as? PhotobookAPIError {
             switch error {
-            case .missingPhotobookInfo:
-                NotificationCenter.default.post(name: ProductManager.failedPhotobookUpload, object: nil) //not resolvable
             case .couldNotSaveTempImageData:
+                Analytics.shared.trackError(.diskError)
                 let info = [ "pending": apiManager.pendingUploads ]
                 NotificationCenter.default.post(name: ProductManager.pendingUploadStatusUpdated, object: info)
                 NotificationCenter.default.post(name: ProductManager.shouldRetryUploadingImages, object: nil) //resolvable
-            case .couldNotBuildCreationParameters:
+            case .missingPhotobookInfo, .couldNotBuildCreationParameters:
+                Analytics.shared.trackError(.photobookInfo)
                 NotificationCenter.default.post(name: ProductManager.failedPhotobookUpload, object: nil) //not resolvable
             }
         } else if let _ = error as? APIClientError {
@@ -522,6 +588,7 @@ extension ProductManager: PhotobookAPIManagerDelegate {
     }
     
     func didFinishUploadingPhotobook() {
+        Analytics.shared.trackAction(.uploadSuccessful)
         NotificationCenter.default.post(name: ProductManager.finishedPhotobookUpload, object: nil)
     }
     
