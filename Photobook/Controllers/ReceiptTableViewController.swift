@@ -205,7 +205,7 @@ struct ReceiptNotificationName {
         }
     }
     
-    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+    override public func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         guard segue.identifier == "ReceiptDismiss" else { return }
         
         if let tabBarController = segue.destination as? UITabBarController {

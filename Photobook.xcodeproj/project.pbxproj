@@ -74,6 +74,7 @@
 		2E7C3695202095ED008033E7 /* ReceiptHeaderTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E7C3694202095ED008033E7 /* ReceiptHeaderTableViewCell.swift */; };
 		2E7C3697202095FB008033E7 /* ReceiptLineItemTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E7C3696202095FB008033E7 /* ReceiptLineItemTableViewCell.swift */; };
 		2E7C6F06201F4E670071E6B8 /* ReceiptTableViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E7C6F05201F4E670071E6B8 /* ReceiptTableViewController.swift */; };
+		2E871BEE208609CB00847BD1 /* PhotobookManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9FA5301205FC3DC00669758 /* PhotobookManager.swift */; };
 		2E876E091FC2CC93007CCFA2 /* AssetPickerCoverCollectionViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E876E081FC2CC93007CCFA2 /* AssetPickerCoverCollectionViewCell.swift */; };
 		2E876E0B1FC2FA15007CCFA2 /* ViewStorySegue.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E876E0A1FC2FA15007CCFA2 /* ViewStorySegue.swift */; };
 		2E8B27F72045A44800A0B403 /* ErrorMessage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E8B27F62045A44800A0B403 /* ErrorMessage.swift */; };
@@ -1615,6 +1616,7 @@
 				2ED14C192063AA4000ED2E2C /* DecimalExtensions.swift in Sources */,
 				2ED14BF22063AA4000ED2E2C /* LayoutBox.swift in Sources */,
 				2ED14BDF2063AA4000ED2E2C /* ReceiptHeaderTableViewCell.swift in Sources */,
+				2E871BEE208609CB00847BD1 /* PhotobookManager.swift in Sources */,
 				2ED14BD52063AA4000ED2E2C /* BorderedViewProtocol.swift in Sources */,
 				2ED14BFB2063AA4000ED2E2C /* StoriesManager.swift in Sources */,
 				2ED14BEF2063AA4000ED2E2C /* UpsellOption.swift in Sources */,
