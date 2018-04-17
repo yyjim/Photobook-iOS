@@ -90,7 +90,10 @@ struct ReceiptNotificationName {
         let loadingString = NSLocalizedString("ReceiptTableViewController/LoadingData", value: "Loading info...", comment: "description for a loading indicator")
         emptyScreenViewController.show(message: loadingString, activity: true)
         
-        if OrderManager.shared.isProcessingOrder {
+        if order.orderId != nil {
+            progressOverlayViewController.hide()
+            state = .completed
+        } else if OrderManager.shared.isProcessingOrder {
             if state == .paymentFailed {
                 //re entered screen from payment methods screen
                 state = .paymentRetry
