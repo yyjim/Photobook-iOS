@@ -9,12 +9,15 @@
 import UIKit
 import Stripe
 
-struct OrdersNotificationName {
+public struct OrdersNotificationName {
     static let orderWasCreated = Notification.Name("ly.kite.sdk.orderWasCreated")
     static let orderWasSuccessful = Notification.Name("ly.kite.sdk.orderWasSuccessful")
 }
 
 @objc public class Order: NSObject, Codable {
+    
+    @objc public static let orderWasCreatedNotificationName = OrdersNotificationName.orderWasCreated
+    @objc public static let orderWasSuccessfulNotificationName = OrdersNotificationName.orderWasSuccessful
 
     // TODO: Get the supported currencies from the server and make sure the currency of the locale is supported. Otherwise fall back to USD, GBP, EUR, first supported, in that order of preference
     let currencyCode = Locale.current.currencyCode ?? "USD" //USD if locale unavailable
