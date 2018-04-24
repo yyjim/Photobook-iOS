@@ -117,7 +117,6 @@ class PageSetupViewController: UIViewController, PhotobookNavigationBarDelegate 
             }
             
             productLayout = product.productLayouts[pageIndex].shallowCopy()
-            productLayout!.hasBeenEdited = true
 
             pageType = product.pageType(forLayoutIndex: pageIndex)
             
@@ -729,6 +728,10 @@ extension PageSetupViewController: TextEditingDelegate {
     func didChangeFontType(to fontType: FontType) {
         productLayout.fontType = fontType
         pageView.setupTextBox()
+    }
+    
+    func shouldReactToKeyboardAppearance() -> Bool {
+        return toolbarButtons[Tool.editText.rawValue].isSelected
     }
 }
 

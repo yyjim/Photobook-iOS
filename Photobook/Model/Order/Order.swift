@@ -23,7 +23,7 @@ public struct OrdersNotificationName {
     let currencyCode = Locale.current.currencyCode ?? "USD" //USD if locale unavailable
     var deliveryDetails: DeliveryDetails?
     var shippingMethod: Int?
-    var paymentMethod: PaymentMethod? = Stripe.deviceSupportsApplePay() ? .applePay : nil
+    var paymentMethod: PaymentMethod? = PaymentAuthorizationManager.isApplePayAvailable ? .applePay : nil
     var products = [PhotobookProduct]()
     var promoCode: String?
     var lastSubmissionDate: Date?
