@@ -7,6 +7,7 @@
 //
 
 import UIKit
+import Stripe
 
 /// Shared manager for the photo book UI
 class PhotobookManager: NSObject {
@@ -21,7 +22,9 @@ class PhotobookManager: NSObject {
     static func setupPayments() {
         PaymentAuthorizationManager.applePayPayTo = "Kite.ly (via HD Photobooks)"
         PaymentAuthorizationManager.applePayMerchantId = "merchant.ly.kite.sdk"
-        KiteAPIClient.shared.apiKey = "78b798ff366815c833dfa848654aba43b71a883a"
+        PhotobookAPIManager.apiKey = "57c832e42dfdda93d072c6a42c41fbcddf100805"
+        KiteAPIClient.shared.apiKey = "57c832e42dfdda93d072c6a42c41fbcddf100805"
+        Stripe.setDefaultPublishableKey("pk_test_fJtOj7oxBKrLFOneBFLj0OH3")
     }
     
     static func rootViewControllerForCurrentState() -> UIViewController {
@@ -49,6 +52,8 @@ class PhotobookManager: NSObject {
         })
         
         // Load the products here, so that the user avoids a loading screen on PhotobookViewController
-        ProductManager.shared.initialise(completion: nil)
+        if NSClassFromString("XCTest") == nil {
+            ProductManager.shared.initialise(completion: nil)
+        }
     }
 }

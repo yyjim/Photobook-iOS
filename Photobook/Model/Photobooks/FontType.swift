@@ -11,21 +11,21 @@ import Foundation
 @objc enum FontType: Int, Codable {
     case plain, classic, solid
     
-    private var product: PhotobookProduct! {
-        return ProductManager.shared.currentProduct
+    var fontFamily: String {
+        get {
+            switch self {
+            case .plain: return "OpenSans-Regular"
+            case .classic: return "Lora-Regular"
+            case .solid: return "Montserrat-Bold"
+            }
+        }
     }
     
     private func fontWithSize(_ size: CGFloat) -> UIFont {
-        let name: String
-        switch self {
-        case .plain: name = "OpenSans-Regular"
-        case .classic: name = "Lora-Regular"
-        case .solid: name = "Montserrat-Bold"
-        }
-        return UIFont(name: name, size: size)!
+        return UIFont(name: fontFamily, size: size)!
     }
     
-    private func paragraphStyle(isSpineText: Bool) -> NSParagraphStyle {
+    func paragraphStyle(isSpineText: Bool) -> NSParagraphStyle {
         let paragraphStyle = NSMutableParagraphStyle()
 
         switch self {
@@ -41,7 +41,7 @@ import Foundation
         return paragraphStyle.copy() as! NSParagraphStyle
     }
     
-    private func photobookFontSize(isSpineText: Bool) -> CGFloat {
+    func photobookFontSize() -> CGFloat {
         switch self {
         case .plain: return 8.0
         case .classic: return 11.0
@@ -78,14 +78,42 @@ import Foundation
         return NSAttributedString(string: text, attributes: attributes)
     }
     
-    /// Font size for the specified page height on screen in relation to the original book size in points
+    /// Font size for the specified screen to page height ratio
     ///
     /// - Parameters:
-    ///   - screenHeight: The height of the page on screen
-    ///   - isSpineText: Whether the text will show on the spine of the book
-    /// - Returns: The scaled font size. If screenHeight is not provided, it returns the original font size.
-    func sizeForScreenHeight(_ screenHeight: CGFloat? = nil, isSpineText: Bool = false) -> CGFloat {
-        let photobookToOnScreenScale = screenHeight != nil ? screenHeight! / product.template.pageHeight : 1.0
-        return photobookFontSize(isSpineText: isSpineText) * photobookToOnScreenScale
+    ///   - screenToPageRatio: The relation between screen height and page height: i.e. screen / page
+    /// - Returns: The scaled font size. If a ratio is not provided, it returns the original font size.
+    func sizeForScreenToPageRatio(_ screenToPageRatio: CGFloat? = nil) -> CGFloat {
+        let photobookToOnScreenScale = screenToPageRatio != nil ? screenToPageRatio! : 1.0
+        return photobookFontSize() * photobookToOnScreenScale
+    }
+}
+
+/// Values for Photobook API
+extension FontType {
+    var apiFontFamily: String {
+        get {
+            switch self {
+            case .plain: return "\'Open Sans\', sans-serif"
+            case .classic: return "Lora, serif"
+            case .solid: return "Montserrat, sans-serif"
+            }
+        }
+    }
+    
+    func apiPhotobookFontWeight() -> CGFloat {
+        switch self {
+        case .plain: return 400
+        case .classic: return 400
+        case .solid: return 700
+        }
+    }
+    
+    func apiPhotobookLineHeight() -> CGFloat {
+        return 1.2
+    }
+    
+    func apiPhotobookFontSize() -> String {
+        return "\(photobookFontSize())pt"
     }
 }

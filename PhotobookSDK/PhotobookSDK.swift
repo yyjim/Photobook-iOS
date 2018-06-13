@@ -8,6 +8,7 @@
 
 import UIKit
 import SDWebImage
+import Stripe
 
 /// Shared manager for the photo book UI
 @objc public class PhotobookSDK: NSObject {
@@ -25,8 +26,10 @@ import SDWebImage
         switch environment {
         case .test:
             APIClient.environment = .test
+            Stripe.setDefaultPublishableKey("pk_test_fJtOj7oxBKrLFOneBFLj0OH3")
         case .live:
             APIClient.environment = .live
+            Stripe.setDefaultPublishableKey("pk_live_qQhXxzjS8inja3K31GDajdXo")
         }
     }
     
@@ -43,10 +46,19 @@ import SDWebImage
     @objc public var applePayMerchantId: String! { didSet { PaymentAuthorizationManager.applePayMerchantId = applePayMerchantId } }
     
     /// Kite public API key
-    @objc public var kiteApiKey: String! { didSet { KiteAPIClient.shared.apiKey = kiteApiKey } }
+    @objc public var kiteApiKey: String! {
+        didSet {
+            PhotobookAPIManager.apiKey = kiteApiKey
+            KiteAPIClient.shared.apiKey = kiteApiKey
+        }
+    }
     
     /// Shared client
-    @objc public static let shared = PhotobookSDK()
+    @objc public static let shared: PhotobookSDK = {
+        let sdk = PhotobookSDK()
+        sdk.setEnvironment(environment: .live)
+        return sdk
+    }()
     
     @objc public func rootViewControllerForCurrentState() -> UIViewController {
         return PhotobookManager.rootViewControllerForCurrentState()
@@ -75,6 +87,14 @@ import SDWebImage
         
         UIFont.loadAllFonts()
         SDWebImageManager.shared().imageCache?.config.shouldCacheImagesInMemory = false
+        
+        if ProcessInfo.processInfo.arguments.contains("UITESTINGENVIRONMENT") {
+            OrderManager.shared.cancelProcessing {}
+            OrderManager.shared.basketOrder.deliveryDetails = nil
+            UserDefaults.standard.removeObject(forKey: "ly.kite.sdk.savedDetailsKey")
+            UserDefaults.standard.removeObject(forKey: "ly.kite.sdk.savedAddressesKey")
+            UserDefaults.standard.synchronize()
+        }
         
         let navigationController = PhotobookNavigationController(navigationBarClass: PhotobookNavigationBar.self, toolbarClass: nil)
         let photobookViewController = photobookMainStoryboard.instantiateViewController(withIdentifier: "PhotobookViewController") as! PhotobookViewController

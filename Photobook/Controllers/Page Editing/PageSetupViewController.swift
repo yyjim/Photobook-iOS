@@ -40,7 +40,9 @@ class PageSetupViewController: UIViewController, PhotobookNavigationBarDelegate 
     @IBOutlet private weak var textEditingContainerView: UIView!
     
     @IBOutlet private var toolbarButtons: [UIButton]!
-    @IBOutlet private weak var toolbar: UIToolbar!
+    @IBOutlet private weak var toolbar: UIToolbar! {
+        didSet { toolbar.clipsToBounds = true }
+    }
     @IBOutlet private var cancelBarButtonItem: UIBarButtonItem!
     
     var photobookNavigationBarType: PhotobookNavigationBarType = .clear
@@ -81,28 +83,28 @@ class PageSetupViewController: UIViewController, PhotobookNavigationBarDelegate 
     @IBOutlet private weak var rightAssetImageView: UIImageView!
     
     private weak var assetContainerView: UIView! {
-        guard let pageType = pageType else { return nil }
-        
         switch pageType {
-        case .left, .last:
+        case .left?, .last?:
             return leftAssetContainerView
-        case .right, .first:
+        case .right?, .first?:
             return rightAssetContainerView
-        case .cover:
+        case .cover?:
             return coverAssetContainerView
+        default:
+            return nil
         }
     }
 
     private weak var assetImageView: UIImageView! {
-        guard let pageType = pageType else { return nil }
-        
         switch pageType {
-        case .left, .last:
+        case .left?, .last?:
             return leftAssetImageView
-        case .right, .first:
+        case .right?, .first?:
             return rightAssetImageView
-        case .cover:
+        case .cover?:
             return coverAssetImageView
+        default:
+            return nil
         }
     }
     
@@ -122,10 +124,10 @@ class PageSetupViewController: UIViewController, PhotobookNavigationBarDelegate 
             
             if pageType == .cover {
                 selectedColor = product.coverColor
-                availableLayouts = ProductManager.shared.coverLayouts(for: product!.template)
+                availableLayouts = ProductManager.shared.currentProduct!.coverLayouts
             } else {
                 selectedColor = product.pageColor
-                availableLayouts = ProductManager.shared.layouts(for: product!.template)
+                availableLayouts = ProductManager.shared.currentProduct!.layouts
             }
         }
     }
@@ -140,22 +142,22 @@ class PageSetupViewController: UIViewController, PhotobookNavigationBarDelegate 
     }
     
     private var pageView: PhotobookPageView! {
-        guard let pageType = pageType else { return nil }
-        
         switch pageType {
-        case .left, .last:
+        case .left?, .last?:
             return photobookFrameView.leftPageView
-        case .right, .first:
+        case .right?, .first?:
             return photobookFrameView.rightPageView
-        case .cover:
+        case .cover?:
             return coverFrameView.pageView
+        default:
+            return nil
         }
     }
     private var oppositePageView: PhotobookPageView? {
         switch pageType {
-        case .left:
+        case .left?:
             return photobookFrameView.rightPageView
-        case .right:
+        case .right?:
             return photobookFrameView.leftPageView
         default:
             return nil
@@ -199,7 +201,7 @@ class PageSetupViewController: UIViewController, PhotobookNavigationBarDelegate 
             pageView.shouldSetImage = false
             
             coverFrameView.color = product.coverColor
-            coverFrameView.pageView.aspectRatio = product.template.aspectRatio
+            coverFrameView.pageView.aspectRatio = product.template.coverAspectRatio
             coverFrameView.pageView.delegate = self
             
             photobookFrameView.pageColor = product.pageColor
@@ -390,7 +392,8 @@ class PageSetupViewController: UIViewController, PhotobookNavigationBarDelegate 
     }
     
     private func setupPhotobookPages() {
-        let aspectRatio = product.template.aspectRatio!
+        let aspectRatio = pageType == .cover ? product.template.coverAspectRatio : product.template.pageAspectRatio
+        
         if isDoublePage {
             photobookFrameView.leftPageView.aspectRatio = pageType == .left ? aspectRatio * 2.0 : 0.0
             photobookFrameView.rightPageView.aspectRatio = pageType == .left ? 0.0 : aspectRatio * 2.0
@@ -419,7 +422,7 @@ class PageSetupViewController: UIViewController, PhotobookNavigationBarDelegate 
             break
         }
         
-        let bleed = product.bleed(forPageSize: pageView.bounds.size)
+        let bleed = product.bleed(forPageSize: pageView.bounds.size, type: pageType)
         photobookFrameView.leftPageView.bleed = bleed
         photobookFrameView.rightPageView.bleed = bleed
         
@@ -567,6 +570,13 @@ class PageSetupViewController: UIViewController, PhotobookNavigationBarDelegate 
         for button in toolbarButtons { button.isSelected = (button === sender) }
         
         isAnimatingTool = true
+        
+        assetPlacementViewController.accessibilityElementsHidden = true
+        textEditingViewController.accessibilityElementsHidden = true
+        assetSelectionContainerView.accessibilityElementsHidden = true
+        layoutSelectionContainerView.accessibilityElementsHidden = true
+        colorSelectionContainerView.accessibilityElementsHidden = true
+        photobookContainerView.accessibilityElementsHidden = true
 
         switch tool {
         case .selectAsset, .selectLayout, .selectColor:
@@ -586,6 +596,11 @@ class PageSetupViewController: UIViewController, PhotobookNavigationBarDelegate 
                 isAnimatingTool = false
             }
 
+            assetSelectionContainerView.accessibilityElementsHidden = false
+            layoutSelectionContainerView.accessibilityElementsHidden = false
+            colorSelectionContainerView.accessibilityElementsHidden = false
+            photobookContainerView.accessibilityElementsHidden = false
+            
             UIView.animate(withDuration: 0.1, animations: {
                 self.photobookContainerView.alpha = 1.0
                 self.assetSelectionContainerView.alpha = tool.rawValue == Tool.selectAsset.rawValue ? 1.0 : 0.0
@@ -599,7 +614,9 @@ class PageSetupViewController: UIViewController, PhotobookNavigationBarDelegate 
             assetPlacementViewController.productLayout = productLayout
             assetPlacementViewController.initialContainerRect = containerRect
             assetPlacementViewController.previewAssetImage = assetImageView.image
-            
+            assetPlacementViewController.pageType = pageType
+            assetPlacementViewController.accessibilityElementsHidden = false
+
             if textEditingWasSelected {
                 textEditingViewController.animateOff {
                     self.view.sendSubview(toBack: self.textEditingContainerView)
@@ -616,9 +633,12 @@ class PageSetupViewController: UIViewController, PhotobookNavigationBarDelegate 
             view.bringSubview(toFront: textEditingContainerView)
             self.textEditingContainerView.alpha = 1.0
             
+            textEditingViewController.accessibilityElementsHidden = false
+            
             textEditingViewController.productLayout = productLayout!
             textEditingViewController.assetImage = assetImageView.image
             textEditingViewController.pageColor = selectedColor
+            textEditingViewController.pageType = pageType
             if placeAssetWasSelected {
                 let containerRect = textEditingContainerView.convert(assetPlacementViewController.targetRect!, from: placementContainerView)
                 textEditingViewController.initialContainerRect = containerRect
@@ -719,14 +739,12 @@ extension PageSetupViewController: ColorSelectorDelegate {
 
 extension PageSetupViewController: TextEditingDelegate {
     
-    func didChangeText(to text: String?) {
-        productLayout.text = text
+    func didChangeText() {
         pageView.setupTextBox()
         tappedToolButton(previouslySelectedButton)
     }
     
-    func didChangeFontType(to fontType: FontType) {
-        productLayout.fontType = fontType
+    func didChangeFontType() {
         pageView.setupTextBox()
     }
     

@@ -24,6 +24,31 @@ class OrderSummaryViewController: UIViewController {
     @IBOutlet weak var previewImageActivityIndicatorView: UIActivityIndicatorView!
     @IBOutlet weak var previewImageProgressView: UIView!
     @IBOutlet weak var coverSnapshotPageView: PhotobookPageView!
+    @IBOutlet weak var orderDetailsLabel: UILabel! {
+        didSet {
+            if #available(iOS 11.0, *) {
+                orderDetailsLabel.font = UIFontMetrics.default.scaledFont(for: orderDetailsLabel.font)
+                orderDetailsLabel.adjustsFontForContentSizeCategory = true
+            }
+        }
+    }
+    @IBOutlet weak var ctaButton: UIButton! {
+        didSet {
+            if #available(iOS 11.0, *) {
+                ctaButton.titleLabel?.font = UIFontMetrics.default.scaledFont(for: ctaButton.titleLabel!.font)
+                ctaButton.titleLabel?.adjustsFontForContentSizeCategory = true
+            }
+        }
+    }
+    
+    @IBOutlet weak var loadingPreviewLabel: UILabel! {
+        didSet {
+            if #available(iOS 11.0, *) {
+                loadingPreviewLabel.font = UIFontMetrics.default.scaledFont(for: loadingPreviewLabel.font)
+                loadingPreviewLabel.adjustsFontForContentSizeCategory = true
+            }
+        }
+    }
     
     private var timer: Timer?
     
@@ -38,29 +63,66 @@ class OrderSummaryViewController: UIViewController {
         return ProductManager.shared.currentProduct
     }
     
+    private let orderSummaryManager = OrderSummaryManager()
+    private weak var checkoutViewController: CheckoutViewController?
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         
         Analytics.shared.trackScreenViewed(.summary)
         
-        NotificationCenter.default.addObserver(self, selector: #selector(orderSummaryManagerWillUpdate), name: OrderSummaryManager.notificationWillUpdate, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(orderSummaryManagerDidUpdateSummary), name: OrderSummaryManager.notificationDidUpdateSummary, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(orderSummaryManagerPreviewImageReady), name: OrderSummaryManager.notificationPreviewImageReady, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(orderSummaryManagerPreviewImageFailed), name: OrderSummaryManager.notificationPreviewImageFailed, object: nil)
-        
         emptyScreenViewController.show(message: Constants.stringLoading, activity: true)
         
-        takeCoverSnapshot { (image) in
-            OrderSummaryManager.shared.coverPageSnapshotImage = image
-            OrderSummaryManager.shared.refresh()
+        orderSummaryManager.templates = ProductManager.shared.products
+        orderSummaryManager.product = ProductManager.shared.currentProduct
+        orderSummaryManager.delegate = self
+        
+        orderSummaryManager.getSummary()
+        
+        takeCoverSnapshot { [weak welf = self] (image) in
+            welf?.orderSummaryManager.coverPageSnapshotImage = image
         }
+    }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        (navigationController?.navigationBar as? PhotobookNavigationBar)?.setBarType(.white)
+    }
+    
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        
+        let topInset: CGFloat
+        if #available(iOS 11, *) {
+            topInset = 0
+        } else {
+            topInset = navigationController?.navigationBar.frame.maxY ?? 0
+        }
+        tableView.contentInset = UIEdgeInsets(top: topInset, left: tableView.contentInset.left, bottom: tableView.contentInset.bottom, right: tableView.contentInset.right)
+    }
+    
+    override func viewDidDisappear(_ animated: Bool) {
+        super.viewDidDisappear(animated)
+        
+        updateCheckoutViewControllerPreviewImage()
     }
     
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         if segue.identifier == "OrderSummarySegueName" {
             
             // Add current item to the basket
-            OrderManager.shared.basketOrder.products = [self.product] //We currently only support one item at a time
+            OrderManager.shared.basketOrder.products = [product] //We currently only support one item at a time
+            
+            checkoutViewController = segue.destination as? CheckoutViewController
+        }
+    }
+    
+    private func updateCheckoutViewControllerPreviewImage() {
+        guard let checkoutViewController = checkoutViewController else { return }
+
+        orderSummaryManager.fetchPreviewImage(withSize: checkoutViewController.itemImageSizePx()) { (image) in
+            guard let image = image else { return }
+            checkoutViewController.updateItemImage(image)
         }
     }
     
@@ -81,7 +143,7 @@ class OrderSummaryViewController: UIViewController {
         
         coverSnapshotPageView.pageIndex = 0
         coverSnapshotPageView.backgroundColor = .clear
-        coverSnapshotPageView.frame.size = CGSize(width: dimensionForPage, height: dimensionForPage / product.template.aspectRatio)
+        coverSnapshotPageView.frame.size = CGSize(width: dimensionForPage, height: dimensionForPage / product.template.coverAspectRatio)
         coverSnapshotPageView.productLayout = product.productLayouts.first
         
         coverSnapshotPageView.color = product.coverColor
@@ -103,90 +165,91 @@ class OrderSummaryViewController: UIViewController {
         }
     }
     
-}
-
-//MARK: - Notifications
-extension OrderSummaryViewController {
-    
-    @objc func orderSummaryManagerWillUpdate() {
-        previewImageView.image = nil
+    private func tappedUpsellOption(for cell: OrderSummaryUpsellTableViewCell, at index: Int) {
+        let displayName = orderSummaryManager.upsellOptions![index].displayName
+        cell.titleLabel?.text = displayName
         
-        // Don't show a loading view if the request takes less than 0.3 seconds
-        timer?.invalidate()
-        timer = Timer.scheduledTimer(timeInterval: 0.3, target: self, selector: #selector(timerTriggered(_:)), userInfo: nil, repeats: false)
-        RunLoop.current.add(timer!, forMode: .defaultRunLoopMode)
-    }
-    
-    @objc func orderSummaryManagerDidUpdateSummary() {
-        progressOverlayViewController.hide(animated: true)
+        cell.accessibilityIdentifier = "upsellOption\(index)"
         
-        if OrderSummaryManager.shared.summary != nil {
-            emptyScreenViewController.hide(animated: true)
-            tableView.reloadData()
+        let isOptionEnabled = orderSummaryManager.isUpsellOptionSelected(orderSummaryManager.upsellOptions![index])
+        cell.setEnabled(isOptionEnabled)
+        cell.accessibilityLabel = displayName
+        if isOptionEnabled {
+            cell.accessibilityValue = NSLocalizedString("Accessibility/Enabled", value: "Enabled", comment: "Informs the user that an upsell option is enabled.")
         } else {
-            
-            emptyScreenViewController.show(message: Constants.stringLoadingFail, title: nil, image: nil, activity: false, buttonTitle: CommonLocalizedStrings.retry, buttonAction: {
-                self.emptyScreenViewController.show(message: Constants.stringLoading, activity: true)
-                OrderSummaryManager.shared.refresh()
-            })
+            cell.accessibilityValue = NSLocalizedString("Accessibility/Disabled", value: "Disabled", comment: "Informs the user that an upsell option is disabled.")
         }
     }
     
-    @objc func orderSummaryManagerPreviewImageReady() {
-        
-        let scaleFactor = UIScreen.main.scale
-        let size = CGSize(width: previewImageView.frame.size.width * scaleFactor, height: previewImageView.frame.size.height * scaleFactor)
-        
-        OrderSummaryManager.shared.fetchPreviewImage(withSize: size) { [weak welf = self] (image) in
-            welf?.previewImageView.image = image
-            
-            welf?.timer?.invalidate()
-            welf?.previewImageProgressView.isHidden = true
-            welf?.previewImageActivityIndicatorView.stopAnimating()
-        }
+    func hideProgressIndicator() {
+        timer?.invalidate()
+        previewImageActivityIndicatorView.stopAnimating()
+        previewImageProgressView.isHidden = true
+        progressOverlayViewController.hide(animated: true)
     }
     
-    @objc func orderSummaryManagerPreviewImageFailed() {
-        self.timer?.invalidate()
-        self.previewImageProgressView.isHidden = true
-        self.previewImageActivityIndicatorView.stopAnimating()
-    }
-
 }
 
 extension OrderSummaryViewController: UITableViewDelegate {
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         switch indexPath.section {
         case Constants.sectionDetails:
-            return 35
+            if #available(iOS 11.0, *) {
+                return UIFontMetrics.default.scaledValue(for: 35)
+            } else {
+                return 35
+            }
         case Constants.sectionTotal:
-            return 45
+            if #available(iOS 11.0, *) {
+                return UIFontMetrics.default.scaledValue(for: 45)
+            } else {
+                return 45
+            }
         case Constants.sectionOptions:
-            return 63
+            if #available(iOS 11.0, *) {
+                return UIFontMetrics.default.scaledValue(for: 63)
+            } else {
+                return 63
+            }
         default:
             return 0
         }
     }
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        tableView.deselectRow(at: indexPath, animated: false)
         if indexPath.section == Constants.sectionOptions,
-            let upsellOption = OrderSummaryManager.shared.upsellOptions?[indexPath.row] {
+            let upsellOption = orderSummaryManager.upsellOptions?[indexPath.row] {
+            
+            //deselect options with same type as the one that is going to be selected because we can't apply, for instance, two conflicting size upgrades to a specific template
+            let selectedSameTypeUpsellOptions = orderSummaryManager.selectedUpsellOptions.filter { (optionInCollection) -> Bool in
+                return optionInCollection != upsellOption && optionInCollection.type == upsellOption.type
+            }
+            for option in selectedSameTypeUpsellOptions {
+                if let row = orderSummaryManager.upsellOptions?.index(of: option) {
+                    let optionIndexPath = IndexPath(row: row, section: Constants.sectionOptions)
+                    (tableView.cellForRow(at: optionIndexPath) as? OrderSummaryUpsellTableViewCell)?.setEnabled(false)
+                    orderSummaryManager.deselectUpsellOption(option)
+                }
+            }
+            
+            
             //handle changed upsell selection
-            OrderSummaryManager.shared.selectUpsellOption(upsellOption)
+            orderSummaryManager.toggleUpsellOption(upsellOption)
             progressOverlayViewController.show(message: NSLocalizedString("OrderSummary/Loading", value: "Loading order details", comment: "Loading product summary"))
-            Analytics.shared.trackAction(.selectedUpsellOption, [Analytics.PropertyNames.upsellOptionName: upsellOption.displayName])
+            
+            if let cell = tableView.cellForRow(at: indexPath) as? OrderSummaryUpsellTableViewCell {
+                tappedUpsellOption(for: cell, at: indexPath.row)
+            }
+            
+            if orderSummaryManager.isUpsellOptionSelected(upsellOption) {
+                Analytics.shared.trackAction(.selectedUpsellOption, [Analytics.PropertyNames.upsellOptionName: upsellOption.displayName])
+            } else {
+                Analytics.shared.trackAction(.deselectedUpsellOption, [Analytics.PropertyNames.upsellOptionName: upsellOption.displayName])
+            }
         }
     }
     
-    func tableView(_ tableView: UITableView, didDeselectRowAt indexPath: IndexPath) {
-        if indexPath.section == Constants.sectionOptions,
-            let upsellOption = OrderSummaryManager.shared.upsellOptions?[indexPath.row] {
-            //handle changed upsell selection
-            OrderSummaryManager.shared.deselectUpsellOption(upsellOption)
-            progressOverlayViewController.show(message: NSLocalizedString("OrderSummary/Loading", value: "Loading order details", comment: "Loading product summary"))
-            Analytics.shared.trackAction(.deselectedUpsellOption, [Analytics.PropertyNames.upsellOptionName: upsellOption.displayName])
-        }
-    }
 }
 
 extension OrderSummaryViewController: UITableViewDataSource {
@@ -196,7 +259,7 @@ extension OrderSummaryViewController: UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        guard let summary = OrderSummaryManager.shared.summary else {
+        guard let summary = orderSummaryManager.summary else {
             return 0
         }
         
@@ -206,7 +269,7 @@ extension OrderSummaryViewController: UITableViewDataSource {
         case Constants.sectionTotal:
             return summary.details.count>0 ? 1 : 0
         case Constants.sectionOptions:
-            if let upsellOptions = OrderSummaryManager.shared.upsellOptions { return upsellOptions.count }
+            if let upsellOptions = orderSummaryManager.upsellOptions { return upsellOptions.count }
             else { return 0 }
         default:
             return 0
@@ -217,23 +280,93 @@ extension OrderSummaryViewController: UITableViewDataSource {
         switch indexPath.section {
         case Constants.sectionDetails:
             let cell = tableView.dequeueReusableCell(withIdentifier: "OrderSummaryDetailTableViewCell", for: indexPath) as! OrderSummaryDetailTableViewCell
-            cell.titleLabel.text = OrderSummaryManager.shared.summary?.details[indexPath.row].name
-            cell.priceLabel.text = OrderSummaryManager.shared.summary?.details[indexPath.row].price
+            cell.titleLabel?.text = orderSummaryManager.summary?.details[indexPath.row].name
+            cell.priceLabel?.text = orderSummaryManager.summary?.details[indexPath.row].price
             return cell
         case Constants.sectionTotal:
             let cell = tableView.dequeueReusableCell(withIdentifier: "OrderSummaryTotalTableViewCell", for: indexPath) as! OrderSummaryTotalTableViewCell
-            let summary = OrderSummaryManager.shared.summary!
-            cell.priceLabel.text = summary.total
+            cell.priceLabel.text = orderSummaryManager.summary!.total
             return cell
         case Constants.sectionOptions:
             let cell = tableView.dequeueReusableCell(withIdentifier: "OrderSummaryUpsellTableViewCell", for: indexPath) as! OrderSummaryUpsellTableViewCell
-            cell.titleLabel?.text = OrderSummaryManager.shared.upsellOptions![indexPath.row].displayName
-            if OrderSummaryManager.shared.isUpsellOptionSelected(OrderSummaryManager.shared.upsellOptions![indexPath.row]) {
-                tableView.selectRow(at: indexPath, animated: false, scrollPosition: .none)
-            }
+            tappedUpsellOption(for: cell, at: indexPath.row)
+            
             return cell
         default:
             return UITableViewCell(style: .default, reuseIdentifier: nil)
         }
+    }
+}
+
+extension OrderSummaryViewController: OrderSummaryManagerDelegate {
+
+    func orderSummaryManagerWillUpdate() {
+        previewImageView.image = nil
+        
+        // Don't show a loading view if the request takes less than 0.3 seconds
+        timer?.invalidate()
+        timer = Timer.scheduledTimer(timeInterval: 0.3, target: self, selector: #selector(timerTriggered(_:)), userInfo: nil, repeats: false)
+        RunLoop.current.add(timer!, forMode: .defaultRunLoopMode)
+    }
+    
+    func orderSummaryManagerFailedToSetPreviewImageUrl() {
+        hideProgressIndicator()
+    }
+    
+    func orderSummaryManagerDidSetPreviewImageUrl() {
+        let scaleFactor = UIScreen.main.scale
+        let size = CGSize(width: previewImageView.frame.size.width * scaleFactor, height: previewImageView.frame.size.height * scaleFactor)
+        
+        orderSummaryManager.fetchPreviewImage(withSize: size) { [weak welf = self] (image) in
+            welf?.previewImageView.image = image
+            
+            welf?.hideProgressIndicator()
+        }
+        
+        //also update checkout vc if available
+        updateCheckoutViewControllerPreviewImage()
+    }
+    
+    func orderSummaryManagerDidUpdate(_ summary: OrderSummary?, error: Error?) {
+        
+        if orderSummaryManager.summary != nil {
+            progressOverlayViewController.hide(animated: true)
+            emptyScreenViewController.hide(animated: true)
+            
+            let numberOfOptions = orderSummaryManager.upsellOptions?.count ?? 0
+            let sectionsToUpdate = tableView.numberOfRows(inSection: 2) == numberOfOptions ? 0...1 : 0...2
+            tableView.reloadSections(IndexSet(integersIn: sectionsToUpdate), with: .automatic)
+        } else {
+            hideProgressIndicator()
+            
+            let errorMessage = error?.localizedDescription ?? CommonLocalizedStrings.somethingWentWrong
+            
+            emptyScreenViewController.show(message: errorMessage, title: nil, image: nil, activity: false, buttonTitle: CommonLocalizedStrings.retry, buttonAction: {
+                self.emptyScreenViewController.show(message: Constants.stringLoading, activity: true)
+                self.orderSummaryManager.getSummary()
+            })
+        }
+    }
+    
+    func orderSummaryManagerFailedToApply(_ upsell: UpsellOption, error: Error?) {
+        hideProgressIndicator()
+        
+        //show message bar
+        let message = ErrorMessage(text: CommonLocalizedStrings.somethingWentWrong)
+        
+        var offsetTop: CGFloat = 0
+        
+        if let navigationBar = navigationController?.navigationBar as? PhotobookNavigationBar {
+            offsetTop = navigationBar.barHeight
+        }
+        MessageBarViewController.show(message: message, parentViewController: self, offsetTop: offsetTop, centred: true, dismissAfter: 3.0)
+        
+        if let selectedIndices = tableView.indexPathsForSelectedRows {
+            for selectedIndex in selectedIndices {
+                tableView.deselectRow(at: selectedIndex, animated: false)
+            }
+        }
+        let sectionsToUpdate = Constants.sectionOptions...Constants.sectionOptions
+        tableView.reloadSections(IndexSet(integersIn: sectionsToUpdate), with: .automatic)
     }
 }

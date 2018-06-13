@@ -132,13 +132,15 @@ class PhotobookPageView: UIView {
     }
     
     func setupImageBox(with assetImage: UIImage? = nil, animated: Bool = true, loadThumbnailFirst: Bool = true) {
-        guard let imageBox = productLayout?.layout.imageLayoutBox else {
+        
+        // Avoid recalculating transforms with intermediate heights, e.g. when UICollectionViewCells are still determining their height
+        let finalBounds = bounds.width > 0 && (aspectRatio ?? 0.0) > 0.0 ? CGSize(width: bounds.width, height: bounds.width / aspectRatio!) : bounds.size
+        guard let imageBox = productLayout?.layout.imageLayoutBox,
+                finalBounds.width > 0.0 && finalBounds.height > 0.0 else {
             assetContainerView.alpha = 0.0
             return
         }
 
-        // Avoid recalculating transforms with intermediate heights, e.g. when UICollectionViewCells are still determining their height
-        let finalBounds = bounds.width > 0 && (aspectRatio ?? 0.0) > 0.0 ? CGSize(width: bounds.width, height: bounds.width / aspectRatio!) : bounds.size
         assetContainerView.alpha = 1.0
         assetContainerView.frame = imageBox.rectContained(in: finalBounds)
         if bleedAssetContainerView != nil {
@@ -192,8 +194,8 @@ class PhotobookPageView: UIView {
         assetImageView.image = image
         assetImageView.center = CGPoint(x: containerView.bounds.midX, y: containerView.bounds.midY)
         
-        productLayout!.productLayoutAsset!.containerSize = containerView.bounds.size
-        assetImageView.transform = productLayout!.productLayoutAsset!.transform
+        productLayoutAsset.containerSize = containerView.bounds.size
+        assetImageView.transform = productLayoutAsset.transform
     }
     
     func setupTextBox(mode: TextBoxMode = .placeHolder) {
@@ -233,20 +235,19 @@ class PhotobookPageView: UIView {
         
         let finalFrame = textBox.rectContained(in: bounds.size)
         
-        let originalWidth = product.template.pageWidth!
-        let originalHeight = product.template.pageHeight!
+        let originalSize = pageIndex == 0 ? product.template.coverSize : product.template.pageSize
         
         pageTextLabel.transform = .identity
-        pageTextLabel.frame = CGRect(x: finalFrame.minX, y: finalFrame.minY, width: originalWidth * textBox.rect.width, height: originalHeight * textBox.rect.height)
+        pageTextLabel.frame = CGRect(x: finalFrame.minX, y: finalFrame.minY, width: originalSize.width * textBox.rect.width, height: originalSize.height * textBox.rect.height)
         
-        let scale = finalFrame.width / (originalWidth * textBox.rect.width)
+        let scale = finalFrame.width / (originalSize.width * textBox.rect.width)
         guard pageTextLabel.text != nil else {
             pageTextLabel.transform = pageTextLabel.transform.scaledBy(x: scale, y: scale)            
             return
         }
         
         let fontType = isShowingTextPlaceholder ? .plain : (productLayout!.fontType ?? .plain)
-        var fontSize = fontType.sizeForScreenHeight()
+        var fontSize = fontType.sizeForScreenToPageRatio()
         if isShowingTextPlaceholder { fontSize *= 2.0 } // Make text larger so the placeholder can be read
         
         pageTextLabel.attributedText = fontType.attributedText(with: pageTextLabel.text!, fontSize: fontSize, fontColor: color.fontColor())

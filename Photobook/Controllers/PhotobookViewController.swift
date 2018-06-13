@@ -57,24 +57,39 @@ class PhotobookViewController: UIViewController, PhotobookNavigationBarDelegate 
     @IBOutlet private weak var collectionViewTopConstraint: NSLayoutConstraint!
     @IBOutlet private weak var collectionViewBottomConstraint: NSLayoutConstraint!
     
-    @IBOutlet private weak var ctaContainerBottomConstraint: NSLayoutConstraint!
-    @IBOutlet private weak var ctaButton: UIButton!
+    @IBOutlet private var ctaContainerBottomConstraint: NSLayoutConstraint!
+    @IBOutlet private weak var ctaButton: UIButton! {
+        didSet {
+            if #available(iOS 11.0, *) {
+                ctaButton.titleLabel?.font = UIFontMetrics.default.scaledFont(for: ctaButton.titleLabel!.font)
+                ctaButton.titleLabel?.adjustsFontForContentSizeCategory = true
+            }
+        }
+    }
     
     @IBOutlet private weak var collectionView: UICollectionView!
     @IBOutlet private weak var ctaButtonContainer: UIView!
     @IBOutlet private var backButton: UIButton?
+    @IBOutlet private weak var ctaButtonHeightConstraint: NSLayoutConstraint!
     private lazy var cancelBarButtonItem: UIBarButtonItem = {
         return UIBarButtonItem(barButtonSystemItem: .cancel, target: self, action: #selector(tappedCancel(_:)))
     }()
     
     private var titleButton: UIButton = {
         let button = UIButton(type: .custom)
-        button.titleLabel?.font = UIFont.systemFont(ofSize: 17.0, weight: .semibold)
+        var font = UIFont.systemFont(ofSize: 17.0, weight: .semibold)
+        if #available(iOS 11.0, *) {
+            font = UIFontMetrics.default.scaledFont(for: font)
+            button.titleLabel?.adjustsFontForContentSizeCategory = true
+        }
+        button.titleLabel?.font = font
+        button.titleLabel?.lineBreakMode = .byTruncatingTail
         button.setTitleColor(.black, for: .normal)
         button.setImage(UIImage(namedInPhotobookBundle:"chevron-down"), for: .normal)
         button.semanticContentAttribute = .forceRightToLeft
         button.imageEdgeInsets = UIEdgeInsets(top: 0.0, left: 0.0, bottom: 0.0, right: Constants.titleArrowOffset)
         button.addTarget(self, action: #selector(didTapOnTitle), for: .touchUpInside)
+        button.accessibilityIdentifier = "titleButton"
         return button
     }()
 
@@ -106,10 +121,23 @@ class PhotobookViewController: UIViewController, PhotobookNavigationBarDelegate 
         (tabBarController?.tabBar as? PhotobookTabBar)?.isBackgroundHidden = true
     }
     
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        
+        updateNavBar()
+    }
+    
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         
         adjustInsets()
+        adjustButtonLabels()
+    }
+    
+    private func adjustButtonLabels() {
+        titleButton.titleLabel?.sizeToFit()
+        titleButton.sizeToFit()
+        ctaButton.titleLabel?.sizeToFit()
     }
     
     private func adjustInsets() {
@@ -143,6 +171,7 @@ class PhotobookViewController: UIViewController, PhotobookNavigationBarDelegate 
         
         if #available(iOS 11.0, *) {
             navigationItem.largeTitleDisplayMode = .never
+            ctaButtonHeightConstraint.constant = UIFontMetrics.default.scaledValue(for: 50)
         } else {
             ctaContainerBottomConstraint.isActive = false
             ctaContainerBottomConstraint = NSLayoutConstraint(item: view, attribute: .bottom, relatedBy: .equal, toItem: ctaButton, attribute: .bottom, multiplier: 1, constant: ctaContainerBottomConstraint.constant)
@@ -177,17 +206,7 @@ class PhotobookViewController: UIViewController, PhotobookNavigationBarDelegate 
             return
         }
         
-        guard
-            let coverLayouts = ProductManager.shared.coverLayouts(for: photobook),
-            !coverLayouts.isEmpty,
-            let layouts = ProductManager.shared.layouts(for: photobook),
-            !layouts.isEmpty
-            else {
-                print("ProductManager: Missing layouts for selected photobook")
-                return
-        }
-        
-        ProductManager.shared.currentProduct = PhotobookProduct(template: photobook, assets: assets, coverLayouts: coverLayouts, layouts: layouts)
+        guard let _ = ProductManager.shared.setCurrentProduct(with: photobook, assets: assets) else { return }
         
         setupTitleView()
         
@@ -215,6 +234,7 @@ class PhotobookViewController: UIViewController, PhotobookNavigationBarDelegate 
         if !isRearranging {
             titleButton.setTitle(product.template.name, for: .normal)
             titleButton.sizeToFit()
+            navigationItem.rightBarButtonItem?.tintColor = Constants.rearrangeGreyColor
             navigationItem.titleView = titleButton
             return
         }
@@ -227,21 +247,11 @@ class PhotobookViewController: UIViewController, PhotobookNavigationBarDelegate 
         guard let photobooks = ProductManager.shared.products else { return }
         
         let alertController = UIAlertController(title: nil, message: NSLocalizedString("Photobook/ChangeSizeTitle", value: "Changing the size keeps your layout intact", comment: "Information when the user wants to change the photo book's size"), preferredStyle: .actionSheet)
-        for photobook in photobooks{
+        for photobook in photobooks {
             alertController.addAction(UIAlertAction(title: photobook.name, style: .default, handler: { [weak welf = self] (_) in
                 guard welf?.product.template.id != photobook.id else { return }
                 
-                guard
-                    let coverLayouts = ProductManager.shared.coverLayouts(for: photobook),
-                    !coverLayouts.isEmpty,
-                    let layouts = ProductManager.shared.layouts(for: photobook),
-                    !layouts.isEmpty
-                    else {
-                        print("ProductManager: Missing layouts for selected photobook")
-                        return
-                }
-                
-                welf?.product.setTemplate(photobook, coverLayouts: coverLayouts, layouts: layouts)
+                _ = ProductManager.shared.setCurrentProduct(with: photobook)
                 
                 welf?.setupTitleView()
                 welf?.collectionView.reloadData()
@@ -249,7 +259,7 @@ class PhotobookViewController: UIViewController, PhotobookNavigationBarDelegate 
         }
         
         alertController.addAction(UIAlertAction(title: CommonLocalizedStrings.cancel, style: .cancel, handler: nil))
-        
+                
         present(alertController, animated: true, completion: nil)
     }
     
@@ -268,6 +278,16 @@ class PhotobookViewController: UIViewController, PhotobookNavigationBarDelegate 
     @IBAction private func didTapRearrange(_ sender: UIBarButtonItem) {
         isRearranging = !isRearranging
         
+        for cell in collectionView.visibleCells {
+            (cell as? PhotobookCollectionViewCell)?.updateVoiceOver(isRearranging: isRearranging)
+            (cell as? PhotobookCoverCollectionViewCell)?.updateVoiceOver(isRearranging: isRearranging)
+            
+            if isRearranging {
+                guard let indexPath = collectionView.indexPath(for: cell) else { continue }
+                (cell as? PhotobookCollectionViewCell)?.isPlusButtonVisible = indexPath.item != 0
+            }
+        }
+        
         // Update drag interaction enabled status
         let interactiveCellClosure: ((Bool) -> Void) = { (isRearranging) in
             UIView.animate(withDuration: Constants.rearrangeAnimationDuration, delay: 0, options: [.curveEaseInOut, .beginFromCurrentState], animations: {
@@ -280,7 +300,13 @@ class PhotobookViewController: UIViewController, PhotobookNavigationBarDelegate 
                 self.collectionView.transform = isRearranging ? CGAffineTransform(translationX: 0.0, y: -self.collectionView.frame.height * (1.0 - Constants.rearrangeScale) / 2.0).scaledBy(x: Constants.rearrangeScale, y: Constants.rearrangeScale) : .identity
                 self.view.setNeedsLayout()
                 self.view.layoutIfNeeded()
-            }, completion: nil)
+            }, completion: { _ in
+                if !isRearranging {
+                    for cell in self.collectionView.visibleCells {
+                        (cell as? PhotobookCollectionViewCell)?.isPlusButtonVisible = false
+                    }
+                }
+            })
         }
 
         interactiveCellClosure(isRearranging)
@@ -378,7 +404,7 @@ class PhotobookViewController: UIViewController, PhotobookNavigationBarDelegate 
     }
         
     @IBAction private func didTapBack() {
-        let alertController = UIAlertController(title: NSLocalizedString("Photobook/BackAlertTitle", value: "Are you sure?", comment: "Title for alert asking the user to go back"), message: NSLocalizedString("Photobook/BackAlertMessage", value: "This will discard any changes made to your photobook", comment: "Message for alert asking the user to go back"), preferredStyle: .alert)
+        let alertController = UIAlertController(title: NSLocalizedString("Photobook/BackAlertTitle", value: "Are you sure?", comment: "Title for alert asking the user to go back"), message: NSLocalizedString("Photobook/BackAlertMessage", value: "This will discard any changes made to your photo book", comment: "Message for alert asking the user to go back"), preferredStyle: .alert)
         alertController.addAction(UIAlertAction(title: NSLocalizedString("Alert/Yes", value: "Yes", comment: "Affirmative button title for alert asking the user confirmation for an action"), style: .destructive, handler: { _ in
             
             // Clear photobook
@@ -443,6 +469,7 @@ class PhotobookViewController: UIViewController, PhotobookNavigationBarDelegate 
                 {
                     if cell.leftIndex == removedIndex || cell.rightIndex == removedIndex {
                         cell.loadPages()
+                        cell.updateVoiceOver(isRearranging: isRearranging)
                     }
                 }
             }
@@ -704,6 +731,7 @@ class PhotobookViewController: UIViewController, PhotobookNavigationBarDelegate 
                 cell.rightIndex = rightIndex
             }
             cell.loadPages()
+            cell.updateVoiceOver(isRearranging: isRearranging)
         }
     }
     
@@ -810,7 +838,7 @@ extension PhotobookViewController: UICollectionViewDataSource {
             
             cell.leftIndex = leftIndex
             cell.rightIndex = rightIndex
-            cell.isPlusButtonVisible = indexPath.item != 0
+            cell.isPlusButtonVisible = indexPath.item != 0 && isRearranging
             
             return cell
         }
@@ -831,8 +859,10 @@ extension PhotobookViewController: UICollectionViewDelegate, UICollectionViewDel
     func collectionView(_ collectionView: UICollectionView, willDisplay cell: UICollectionViewCell, forItemAt indexPath: IndexPath) {
         if let cell = cell as? PhotobookCollectionViewCell {
             cell.loadPages()
+            cell.updateVoiceOver(isRearranging: isRearranging)
         } else if let cell = cell as? PhotobookCoverCollectionViewCell {
             cell.loadCoverAndSpine()
+            cell.updateVoiceOver(isRearranging: isRearranging)
         }
     }
     
@@ -842,7 +872,7 @@ extension PhotobookViewController: UICollectionViewDelegate, UICollectionViewDel
         }
 
         let pageWidth = (view.bounds.width - Constants.cellSideMargin * 2.0 - PhotobookConstants.horizontalPageToCoverMargin * 2.0) / 2.0
-        let pageHeight = pageWidth / product.template.aspectRatio
+        let pageHeight = pageWidth / product.template.pageAspectRatio
 
         // PhotoboookCollectionViewCell works when the collectionView uses dynamic heights by setting up the aspect ratio of its pages.
         // This however, causes problems with the drag & drop functionality and that is why the cell height is calculated by using the measurements set on the storyboard.
@@ -1028,7 +1058,7 @@ extension PhotobookViewController: PhotobookCollectionViewCellDelegate {
     }
     
     private func showNotAllowedToAddMorePagesAlert() {
-        let alertController = UIAlertController(title: NSLocalizedString("Photobook/TooManyPagesAlertTitle", value: "Too many pages", comment: "Alert title informing the user that they have reached the maximum number of pages"), message: NSLocalizedString("Photobook/TooManyPagesAlertMessage", value: "You cannot add any more pages to your photobook", comment: "Alert message informing the user that they have reached the maximum number of pages"), preferredStyle: .alert)
+        let alertController = UIAlertController(title: NSLocalizedString("Photobook/TooManyPagesAlertTitle", value: "Too many pages", comment: "Alert title informing the user that they have reached the maximum number of pages"), message: NSLocalizedString("Photobook/TooManyPagesAlertMessage", value: "You cannot add any more pages to your photo book", comment: "Alert message informing the user that they have reached the maximum number of pages"), preferredStyle: .alert)
         alertController.addAction(UIAlertAction(title: CommonLocalizedStrings.alertOK, style: .default, handler: nil))
         present(alertController, animated: true, completion: nil)
     }

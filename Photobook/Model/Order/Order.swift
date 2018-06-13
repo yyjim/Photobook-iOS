@@ -37,11 +37,21 @@ public struct OrdersNotificationName {
     
     var orderIsFree: Bool {
         var orderIsFree = false
-        if let cost = validCost, let selectedMethod = shippingMethod, let shippingMethod = cost.shippingMethod(id: selectedMethod){
+        if let cost = validCost, let selectedMethod = shippingMethod, let shippingMethod = cost.shippingMethod(id: selectedMethod) {
             orderIsFree = shippingMethod.totalCost == 0.0
         }
         
         return orderIsFree
+    }
+    
+    var orderDescription: String? {
+        guard products.count > 0 else { return nil }
+        
+        if products.count == 1 {
+            return products.first!.template.name
+        }
+        
+        return String(format: NSLocalizedString("Order/Description", value: "%@ & %d others", comment: "Description of an order"), products.first!.template.name, products.count - 1)
     }
     
     override public var hashValue: Int {
@@ -49,17 +59,14 @@ public struct OrdersNotificationName {
         if let deliveryDetails = deliveryDetails { stringHash += "ad:\(deliveryDetails.hashValue)," }
         if let promoCode = promoCode { stringHash += "pc:\(promoCode)," }
         
+        //TODO: include shipping options
+        
+        var productsHash: Int = 0
         for product in products {
-            if let productName = product.template.name { stringHash += "jb:\(productName)," }
+            productsHash = productsHash ^ product.hashValue
         }
         
-        stringHash += "up:("
-        for upsell in OrderSummaryManager.shared.selectedUpsellOptions {
-            stringHash += "\(upsell.hashValue),"
-        }
-        stringHash += ")"
-        
-        return stringHash.hashValue
+        return stringHash.hashValue ^ productsHash
     }
     
     var hasValidCachedCost: Bool {
@@ -77,7 +84,7 @@ public struct OrdersNotificationName {
         let promoDiscount = validPromoCode == promoCode ? "-£5.00" : nil
         var promoCodeInvalidReason:String?
         if promoCode != nil && promoDiscount == nil {
-            promoCodeInvalidReason = "Invalid code 🤷"
+            promoCodeInvalidReason = NSLocalizedString("Checkout/PromoCodeIsInvalid", value: "Invalid code 🤷", comment: "Label that informs the user that the promo code they have entered is not valid")
         }
         
         self.cachedCost = Cost(hash: hashValue, lineItems: [lineItem], shippingMethods: [shippingMethod, shippingMethod2], promoDiscount: promoDiscount, promoCodeInvalidReason: promoCodeInvalidReason)
@@ -106,9 +113,8 @@ public struct OrdersNotificationName {
         
         for product in products {
             jobs.append([
-                "template_id" : product.template.productTemplateId ?? "",
-                "multiples" : product.itemCount,
-                "assets": [["inside_pdf" : product.photobookId ?? ""]]
+                "template_id" : product.template.templateId,
+                "multiples" : product.itemCount
                 ])
         }
         

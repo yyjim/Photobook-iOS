@@ -165,6 +165,8 @@ class SpineTextEditingViewController: UIViewController {
         
         setTextFieldAttributes()
         
+        textToolBarView.select(fontType: fontType)
+        
         backgroundColor = view.backgroundColor
         view.backgroundColor = .clear
         view.alpha = 1.0
@@ -191,7 +193,7 @@ class SpineTextEditingViewController: UIViewController {
     }
     
     private func setTextFieldAttributes() {
-        let fontSize = fontType.sizeForScreenHeight(spineFrameViewHeightConstraint.constant, isSpineText: true)
+        let fontSize = fontType.sizeForScreenToPageRatio(spineFrameViewHeightConstraint.constant / product.template.coverSize.height)
         let fontColor = product.coverColor.fontColor()
         textField.attributedText = fontType.attributedText(with: textField.text, fontSize: fontSize, fontColor: fontColor, isSpineText: true)
         textField.defaultTextAttributes = fontType.typingAttributes(fontSize: fontSize, fontColor: fontColor, isSpineText: true)
