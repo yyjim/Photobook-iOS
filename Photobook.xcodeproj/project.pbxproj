@@ -106,14 +106,6 @@
 		2E8705AF208E0520004B4B36 /* Analytics.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 2ED14C342063ABB700ED2E2C /* Analytics.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		2E8705B0208E0520004B4B36 /* Bolts.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2ED14C3A2063ABB700ED2E2C /* Bolts.framework */; };
 		2E8705B1208E0520004B4B36 /* Bolts.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 2ED14C3A2063ABB700ED2E2C /* Bolts.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
-		2E8705B2208E0520004B4B36 /* FacebookCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2ED14C352063ABB700ED2E2C /* FacebookCore.framework */; };
-		2E8705B3208E0520004B4B36 /* FacebookCore.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 2ED14C352063ABB700ED2E2C /* FacebookCore.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
-		2E8705B4208E0520004B4B36 /* FacebookLogin.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2ED14C3C2063ABB700ED2E2C /* FacebookLogin.framework */; };
-		2E8705B5208E0520004B4B36 /* FacebookLogin.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 2ED14C3C2063ABB700ED2E2C /* FacebookLogin.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
-		2E8705B6208E0520004B4B36 /* FBSDKCoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2ED14C3D2063ABB700ED2E2C /* FBSDKCoreKit.framework */; };
-		2E8705B7208E0520004B4B36 /* FBSDKCoreKit.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 2ED14C3D2063ABB700ED2E2C /* FBSDKCoreKit.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
-		2E8705B8208E0520004B4B36 /* FBSDKLoginKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2ED14C372063ABB700ED2E2C /* FBSDKLoginKit.framework */; };
-		2E8705B9208E0520004B4B36 /* FBSDKLoginKit.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 2ED14C372063ABB700ED2E2C /* FBSDKLoginKit.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		2E8705BA208E0520004B4B36 /* KeychainSwift.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2ED14C382063ABB700ED2E2C /* KeychainSwift.framework */; };
 		2E8705BB208E0520004B4B36 /* KeychainSwift.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 2ED14C382063ABB700ED2E2C /* KeychainSwift.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		2E8705BC208E0520004B4B36 /* OAuthSwift.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2ED14C362063ABB700ED2E2C /* OAuthSwift.framework */; };
@@ -251,15 +243,11 @@
 		2ED14C322063AB7200ED2E2C /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 2E0B58831FB30F2100F31A9E /* Main.storyboard */; };
 		2ED14C3E2063ABB700ED2E2C /* SDWebImage.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2ED14C332063ABB700ED2E2C /* SDWebImage.framework */; };
 		2ED14C3F2063ABB700ED2E2C /* Analytics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2ED14C342063ABB700ED2E2C /* Analytics.framework */; };
-		2ED14C402063ABB700ED2E2C /* FacebookCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2ED14C352063ABB700ED2E2C /* FacebookCore.framework */; };
 		2ED14C412063ABB700ED2E2C /* OAuthSwift.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2ED14C362063ABB700ED2E2C /* OAuthSwift.framework */; };
-		2ED14C422063ABB700ED2E2C /* FBSDKLoginKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2ED14C372063ABB700ED2E2C /* FBSDKLoginKit.framework */; };
 		2ED14C432063ABB700ED2E2C /* KeychainSwift.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2ED14C382063ABB700ED2E2C /* KeychainSwift.framework */; };
 		2ED14C442063ABB700ED2E2C /* PayPalMobileSDK.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2ED14C392063ABB700ED2E2C /* PayPalMobileSDK.framework */; };
 		2ED14C452063ABB700ED2E2C /* Bolts.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2ED14C3A2063ABB700ED2E2C /* Bolts.framework */; };
 		2ED14C462063ABB700ED2E2C /* Stripe.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2ED14C3B2063ABB700ED2E2C /* Stripe.framework */; };
-		2ED14C472063ABB700ED2E2C /* FacebookLogin.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2ED14C3C2063ABB700ED2E2C /* FacebookLogin.framework */; };
-		2ED14C482063ABB700ED2E2C /* FBSDKCoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2ED14C3D2063ABB700ED2E2C /* FBSDKCoreKit.framework */; };
 		2ED5B3811FB478CC00F17F6D /* AlbumSearchResultsTableViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2ED5B3801FB478CC00F17F6D /* AlbumSearchResultsTableViewController.swift */; };
 		2ED5B3831FB4806D00F17F6D /* AlbumSearchResultsTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2ED5B3821FB4806D00F17F6D /* AlbumSearchResultsTableViewCell.swift */; };
 		2ED79FE91FBAEDE90046B96C /* AssetPickerCollectionViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2ED79FE81FBAEDE90046B96C /* AssetPickerCollectionViewController.swift */; };
@@ -646,16 +634,12 @@
 			dstSubfolderSpec = 10;
 			files = (
 				2E8705B1208E0520004B4B36 /* Bolts.framework in Embed Frameworks */,
-				2E8705B7208E0520004B4B36 /* FBSDKCoreKit.framework in Embed Frameworks */,
 				2E8705BD208E0520004B4B36 /* OAuthSwift.framework in Embed Frameworks */,
-				2E8705B3208E0520004B4B36 /* FacebookCore.framework in Embed Frameworks */,
 				2E8705AA208E042C004B4B36 /* Photobook.framework in Embed Frameworks */,
 				2E51FEBD20E2420F00E62102 /* PayPalDynamicLoader.framework in Embed Frameworks */,
 				2E8705BB208E0520004B4B36 /* KeychainSwift.framework in Embed Frameworks */,
 				2E8705BF208E0520004B4B36 /* PayPalMobileSDK.framework in Embed Frameworks */,
-				2E8705B9208E0520004B4B36 /* FBSDKLoginKit.framework in Embed Frameworks */,
 				2E8705C1208E0520004B4B36 /* SDWebImage.framework in Embed Frameworks */,
-				2E8705B5208E0520004B4B36 /* FacebookLogin.framework in Embed Frameworks */,
 				2E8705AF208E0520004B4B36 /* Analytics.framework in Embed Frameworks */,
 				2E8705C3208E0520004B4B36 /* Stripe.framework in Embed Frameworks */,
 			);
@@ -981,16 +965,12 @@
 			buildActionMask = 2147483647;
 			files = (
 				2E8705B0208E0520004B4B36 /* Bolts.framework in Frameworks */,
-				2E8705B6208E0520004B4B36 /* FBSDKCoreKit.framework in Frameworks */,
 				2E8705BC208E0520004B4B36 /* OAuthSwift.framework in Frameworks */,
-				2E8705B2208E0520004B4B36 /* FacebookCore.framework in Frameworks */,
 				2E8705A9208E042C004B4B36 /* Photobook.framework in Frameworks */,
 				2E51FEBC20E2420F00E62102 /* PayPalDynamicLoader.framework in Frameworks */,
 				2E8705BA208E0520004B4B36 /* KeychainSwift.framework in Frameworks */,
 				2E8705BE208E0520004B4B36 /* PayPalMobileSDK.framework in Frameworks */,
-				2E8705B8208E0520004B4B36 /* FBSDKLoginKit.framework in Frameworks */,
 				2E8705C0208E0520004B4B36 /* SDWebImage.framework in Frameworks */,
-				2E8705B4208E0520004B4B36 /* FacebookLogin.framework in Frameworks */,
 				2E8705AE208E0520004B4B36 /* Analytics.framework in Frameworks */,
 				2E8705C2208E0520004B4B36 /* Stripe.framework in Frameworks */,
 			);
@@ -1009,16 +989,12 @@
 			files = (
 				2ED14C3E2063ABB700ED2E2C /* SDWebImage.framework in Frameworks */,
 				2ED14C3F2063ABB700ED2E2C /* Analytics.framework in Frameworks */,
-				2ED14C402063ABB700ED2E2C /* FacebookCore.framework in Frameworks */,
 				2ED14C412063ABB700ED2E2C /* OAuthSwift.framework in Frameworks */,
 				2E51FEBB20E237AE00E62102 /* PayPalDynamicLoader.framework in Frameworks */,
-				2ED14C422063ABB700ED2E2C /* FBSDKLoginKit.framework in Frameworks */,
 				2ED14C432063ABB700ED2E2C /* KeychainSwift.framework in Frameworks */,
 				2ED14C442063ABB700ED2E2C /* PayPalMobileSDK.framework in Frameworks */,
 				2ED14C452063ABB700ED2E2C /* Bolts.framework in Frameworks */,
 				2ED14C462063ABB700ED2E2C /* Stripe.framework in Frameworks */,
-				2ED14C472063ABB700ED2E2C /* FacebookLogin.framework in Frameworks */,
-				2ED14C482063ABB700ED2E2C /* FBSDKCoreKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -3445,7 +3421,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = ly.kite.Photobook;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
-				SWIFT_VERSION = 4.0;
+				SWIFT_VERSION = 4.2;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VERSIONING_SYSTEM = "apple-generic";
 				VERSION_INFO_PREFIX = "";
@@ -3475,7 +3451,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = ly.kite.Photobook;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
-				SWIFT_VERSION = 4.0;
+				SWIFT_VERSION = 4.2;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VERSIONING_SYSTEM = "apple-generic";
 				VERSION_INFO_PREFIX = "";
@@ -3504,7 +3480,7 @@
 				ONLY_ACTIVE_ARCH = NO;
 				PRODUCT_BUNDLE_IDENTIFIER = ly.kite.Photobook;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
-				SWIFT_VERSION = 4.0;
+				SWIFT_VERSION = 4.2;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VERSIONING_SYSTEM = "apple-generic";
 				VERSION_INFO_PREFIX = "";
@@ -3533,7 +3509,7 @@
 				ONLY_ACTIVE_ARCH = NO;
 				PRODUCT_BUNDLE_IDENTIFIER = ly.kite.Photobook;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
-				SWIFT_VERSION = 4.0;
+				SWIFT_VERSION = 4.2;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VERSIONING_SYSTEM = "apple-generic";
 				VERSION_INFO_PREFIX = "";
