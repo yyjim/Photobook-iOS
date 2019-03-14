@@ -185,7 +185,7 @@ extension Story: Album {
     }
     
     func coverAsset(completionHandler: @escaping (PhotobookAsset?) -> Void) {
-        collectionForCoverPhoto.coverAsset(useFirstImageInCollection: true, completionHandler: completionHandler)
+        collectionForCoverPhoto.coverAsset(useFirstImageInCollection: false, completionHandler: completionHandler)
     }
     
     func loadNextBatchOfAssets(completionHandler: ((Error?) -> Void)?) {}
