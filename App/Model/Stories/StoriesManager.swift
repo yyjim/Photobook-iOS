@@ -155,6 +155,7 @@ class StoriesManager: NSObject {
             moments.enumerateObjects { (collection: PHAssetCollection, index: Int,  stop: UnsafeMutablePointer<ObjCBool>) in
                 //only use images
                 let fetchOptions = PHFetchOptions()
+                fetchOptions.sortDescriptors = [ NSSortDescriptor(key: "creationDate", ascending: false) ]
                 fetchOptions.predicate = NSPredicate(format: "mediaType = %d", PHAssetMediaType.image.rawValue)
                 guard let filteredCollection = welf?.assetManager.fetchAssets(in: collection, options: fetchOptions) else { return }
                 

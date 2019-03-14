@@ -32,11 +32,18 @@ import Photobook
 
 protocol CollectionManager {
     func fetchMoments(inMomentList collectionList: PHCollectionList) -> PHFetchResult<PHAssetCollection>
+    func fetchMoments(inMomentList collectionList: PHCollectionList, options: PHFetchOptions?) -> PHFetchResult<PHAssetCollection>
 }
 
 class DefaultCollectionManager: CollectionManager {
     func fetchMoments(inMomentList collectionList: PHCollectionList) -> PHFetchResult<PHAssetCollection> {
-        return PHAssetCollection.fetchMoments(inMomentList: collectionList, options: PHFetchOptions())
+        let options = PHFetchOptions()
+        options.sortDescriptors = [ NSSortDescriptor(key: "startDate", ascending: false) ]
+        return fetchMoments(inMomentList: collectionList, options: options)
+    }
+
+    func fetchMoments(inMomentList collectionList: PHCollectionList, options: PHFetchOptions?) -> PHFetchResult<PHAssetCollection> {
+        return PHAssetCollection.fetchMoments(inMomentList: collectionList, options: options)
     }
 }
 
@@ -162,13 +169,11 @@ extension Story: Album {
         fetchOptions.wantsIncrementalChangeDetails = false
         fetchOptions.includeHiddenAssets = false
         fetchOptions.includeAllBurstAssets = false
+        fetchOptions.sortDescriptors = [ NSSortDescriptor(key: "creationDate", ascending: false) ]
+        fetchOptions.predicate = NSPredicate(format: "mediaType = %d", PHAssetMediaType.image.rawValue) // Only images
         
         let moments = collectionManager.fetchMoments(inMomentList: collectionList)
         moments.enumerateObjects { (collection: PHAssetCollection, index: Int,  stop: UnsafeMutablePointer<ObjCBool>) in
-            
-            fetchOptions.sortDescriptors = [ NSSortDescriptor(key: "creationDate", ascending: true) ]
-            fetchOptions.predicate = NSPredicate(format: "mediaType = %d", PHAssetMediaType.image.rawValue) // Only images
-            
             let fetchedAssets = self.assetsManager.fetchAssets(in: collection, options: fetchOptions)
             fetchedAssets.enumerateObjects({ (asset, _, _) in
                 let photobookAsset = PhotobookAsset(withPHAsset: asset, albumIdentifier: self.identifier)
